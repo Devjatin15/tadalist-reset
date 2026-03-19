@@ -171,45 +171,4 @@ window.checkMatch=function(){
 </script>
 </body>
 </html>
-```
 
-4. Scroll down → click **"Commit changes"** → click **"Commit changes"** again
-
----
-
-## Step 4 — Enable GitHub Pages
-
-1. Click **Settings** tab in your repo
-2. Click **Pages** on the left sidebar
-3. Under **"Branch"** select **`main`**
-4. Click **Save**
-5. Wait 2 minutes
-6. GitHub will show you a URL like:
-```
-https://YOURUSERNAME.github.io/tadalist-reset
-```
-
-Copy that URL!
-
----
-
-## Step 5 — Add to Firebase authorized domains
-
-1. Go to **firebase.google.com** → your project
-2. **Authentication → Settings → Authorized domains**
-3. Click **Add domain**
-4. Type your GitHub Pages URL like:
-```
-YOURUSERNAME.github.io
-```
-5. Click **Add**
-
----
-
-## Step 6 — Set Firebase action URL
-
-1. **Authentication → Templates → Password Reset**
-2. Click pencil icon → **Customize action URL**
-3. Paste your GitHub Pages URL:
-```
-https://YOURUSERNAME.github.io/tadalist-reset
