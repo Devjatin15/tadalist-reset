@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Reset Password — Tadalist 🐸</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{min-height:100vh;background:linear-gradient(135deg,#0F1117 0%,#1A1D27 50%,#2D1B69 100%);display:flex;align-items:center;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:20px}
+.card{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:36px 32px;width:100%;max-width:420px}
+.logo{font-size:40px;text-align:center;margin-bottom:8px}
+.app-name{font-size:28px;font-weight:800;color:#4F8EF7;text-align:center;margin-bottom:6px}
+.subtitle{font-size:14px;color:#8B8FA8;text-align:center;margin-bottom:32px}
+.title{font-size:20px;font-weight:700;color:#E8E9F0;text-align:center;margin-bottom:6px}
+.desc{font-size:13px;color:#8B8FA8;text-align:center;margin-bottom:24px}
+label{font-size:12px;color:#8B8FA8;display:block;margin-bottom:6px}
+input{width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:13px 14px;color:#E8E9F0;font-size:14px;margin-bottom:16px;outline:none;transition:border .2s}
+input:focus{border-color:#4F8EF7}
+.strength-bar{display:flex;gap:4px;margin-top:-10px;margin-bottom:6px}
+.seg{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,0.1);transition:background .3s}
+.strength-text{font-size:11px;margin-bottom:16px;color:#555A75}
+.match-text{font-size:12px;margin-bottom:14px;min-height:18px}
+button{width:100%;background:#4F8EF7;color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .2s;margin-bottom:12px}
+button:hover{opacity:.9}
+button:disabled{opacity:.5;cursor:not-allowed}
+.back{text-align:center;font-size:13px;color:#555A75;cursor:pointer;margin-top:4px}
+.back:hover{color:#8B8FA8}
+.error-msg{color:#F43F5E;font-size:13px;text-align:center;margin-bottom:14px;display:none}
+.spinner{display:inline-block;width:16px;height:16px;border:3px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+#successScreen{display:none;text-align:center}
+#successScreen .big{font-size:64px;margin-bottom:16px}
+#successScreen h2{font-size:22px;font-weight:800;color:#E8E9F0;margin-bottom:10px}
+#successScreen p{font-size:14px;color:#8B8FA8;margin-bottom:28px;line-height:1.6}
+#loadingScreen{text-align:center;padding:20px 0}
+#loadingScreen .big-spin{width:40px;height:40px;border:4px solid rgba(255,255,255,0.1);border-top-color:#4F8EF7;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px}
+#loadingScreen p{color:#8B8FA8;font-size:14px}
+#invalidScreen{display:none;text-align:center;padding:10px 0}
+#invalidScreen .big{font-size:48px;margin-bottom:16px}
+#invalidScreen h2{font-size:20px;font-weight:700;color:#E8E9F0;margin-bottom:10px}
+#invalidScreen p{font-size:13px;color:#8B8FA8;margin-bottom:24px;line-height:1.6}
+#resetForm{display:none}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">🐸</div>
+  <div class="app-name">Tadalist</div>
+  <div class="subtitle">Password Reset</div>
+
+  <div id="loadingScreen">
+    <div class="big-spin"></div>
+    <p>Verifying your reset link…</p>
+  </div>
+
+  <div id="invalidScreen">
+    <div class="big">⚠️</div>
+    <h2>Link Expired</h2>
+    <p>This link has expired or already been used. Please request a new one from the app.</p>
+    <button onclick="window.location.href='https://tadalist.netlify.app'">Back to Tadalist</button>
+  </div>
+
+  <div id="resetForm">
+    <div class="title">Create New Password 🔒</div>
+    <div class="desc">Enter a strong new password below</div>
+    <label>New Password</label>
+    <input type="password" id="pw1" placeholder="Enter new password" oninput="checkStr()"/>
+    <div class="strength-bar">
+      <div class="seg" id="s1"></div>
+      <div class="seg" id="s2"></div>
+      <div class="seg" id="s3"></div>
+      <div class="seg" id="s4"></div>
+    </div>
+    <div class="strength-text" id="strText">Enter a password</div>
+    <label>Confirm Password</label>
+    <input type="password" id="pw2" placeholder="Confirm new password" oninput="checkMatch()"/>
+    <div class="match-text" id="matchText"></div>
+    <div class="error-msg" id="errMsg"></div>
+    <button id="submitBtn" onclick="doReset()">Set New Password</button>
+    <div class="back" onclick="window.location.href='https://tadalist.netlify.app'">← Back to Tadalist</div>
+  </div>
+
+  <div id="successScreen">
+    <div class="big">🎉</div>
+    <h2>Password Updated!</h2>
+    <p>Your password has been reset successfully. You can now sign in with your new password.</p>
+    <button onclick="window.location.href='https://tadalist.netlify.app'">Sign In Now →</button>
+  </div>
+</div>
+
+<script type="module">
+import{initializeApp}from'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+import{getAuth,confirmPasswordReset,verifyPasswordResetCode}from'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
+
+const app=initializeApp({
+  apiKey:"AIzaSyC7HoNWDQX71PPUm_lFVQBBBCt4BugyJHY",
+  authDomain:"worksmart-b899b.firebaseapp.com",
+  projectId:"worksmart-b899b",
+  storageBucket:"worksmart-b899b.firebasestorage.app",
+  messagingSenderId:"864052016879",
+  appId:"1:864052016879:web:b6fa9ccb345191217acd1a"
+});
+
+const auth=getAuth(app);
+const params=new URLSearchParams(window.location.search);
+const mode=params.get('mode');
+const code=params.get('oobCode');
+
+function show(id){
+  ['loadingScreen','invalidScreen','resetForm','successScreen'].forEach(s=>{
+    document.getElementById(s).style.display=s===id?'block':'none';
+  });
+}
+
+if(mode==='resetPassword'&&code){
+  show('loadingScreen');
+  verifyPasswordResetCode(auth,code)
+    .then(()=>show('resetForm'))
+    .catch(()=>show('invalidScreen'));
+}else{
+  show('invalidScreen');
+}
+
+window.doReset=async function(){
+  const pw1=document.getElementById('pw1').value;
+  const pw2=document.getElementById('pw2').value;
+  const err=document.getElementById('errMsg');
+  const btn=document.getElementById('submitBtn');
+  err.style.display='none';
+  if(!pw1||!pw2){err.style.display='block';err.textContent='Please fill in both fields';return;}
+  if(pw1!==pw2){err.style.display='block';err.textContent='❌ Passwords do not match';return;}
+  if(pw1.length<6){err.style.display='block';err.textContent='❌ Use at least 6 characters';return;}
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span>Updating…';
+  try{
+    await confirmPasswordReset(auth,code,pw1);
+    show('successScreen');
+  }catch(e){
+    err.style.display='block';
+    err.textContent='❌ '+e.message.replace('Firebase: ','').replace(/\(auth.*\)/,'');
+    btn.disabled=false;
+    btn.innerHTML='Set New Password';
+  }
+};
+
+window.checkStr=function(){
+  const pw=document.getElementById('pw1').value;
+  let s=0;
+  if(pw.length>=4)s++;
+  if(pw.length>=6)s++;
+  if(pw.length>=8)s++;
+  if(pw.length>=10||/[^a-zA-Z0-9]/.test(pw))s++;
+  const cols=['#F43F5E','#F97316','#F59E0B','#34D399'];
+  const labs=['Too weak','Fair','Good','Strong ✅'];
+  [1,2,3,4].forEach(i=>{
+    document.getElementById('s'+i).style.background=i<=s?cols[s-1]:'rgba(255,255,255,0.1)';
+  });
+  const t=document.getElementById('strText');
+  t.textContent=pw.length===0?'Enter a password':labs[s-1]||'Too weak';
+  t.style.color=pw.length===0?'#555A75':cols[s-1]||'#F43F5E';
+};
+
+window.checkMatch=function(){
+  const pw1=document.getElementById('pw1').value;
+  const pw2=document.getElementById('pw2').value;
+  const t=document.getElementById('matchText');
+  if(!pw2){t.textContent='';return;}
+  if(pw1===pw2){t.textContent='✅ Passwords match';t.style.color='#34D399';}
+  else{t.textContent='❌ Passwords do not match';t.style.color='#F43F5E';}
+};
+</script>
+</body>
+</html>
+```
+
+4. Scroll down → click **"Commit changes"** → click **"Commit changes"** again
+
+---
+
+## Step 4 — Enable GitHub Pages
+
+1. Click **Settings** tab in your repo
+2. Click **Pages** on the left sidebar
+3. Under **"Branch"** select **`main`**
+4. Click **Save**
+5. Wait 2 minutes
+6. GitHub will show you a URL like:
+```
+https://YOURUSERNAME.github.io/tadalist-reset
+```
+
+Copy that URL!
+
+---
+
+## Step 5 — Add to Firebase authorized domains
+
+1. Go to **firebase.google.com** → your project
+2. **Authentication → Settings → Authorized domains**
+3. Click **Add domain**
+4. Type your GitHub Pages URL like:
+```
+YOURUSERNAME.github.io
+```
+5. Click **Add**
+
+---
+
+## Step 6 — Set Firebase action URL
+
+1. **Authentication → Templates → Password Reset**
+2. Click pencil icon → **Customize action URL**
+3. Paste your GitHub Pages URL:
+```
+https://YOURUSERNAME.github.io/tadalist-reset
